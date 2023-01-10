@@ -4,6 +4,8 @@
 #include  <xsearch.h>
 #include  <ranmath.h>
 
+#include "modifications.h"
+
 /*! \file mcio.c 
  *
  * \brief Input/Output Library
@@ -2059,9 +2061,15 @@ printdata (char *genooutfilename, char *indoutfilename,
 
     // print unpacked genotype output
     if (gfilename != NULL) {
-      openit (gfilename, &gfile, "w");
-      if (tersemode == NO)
-	fprintf (gfile, "#SNP_ID,INDIV_ID,VART_ALLELE_CNT\n");
+        openit (gfilename, &gfile, "w");
+        if (tersemode == NO)
+        {
+#if (TAB_SEPARATED_ANCESTRYMAP_GENO == YES)
+            fprintf (gfile, "#SNP_ID\tINDIV_ID\tVART_ALLELE_CNT\n");
+#else
+            fprintf (gfile, "#SNP_ID,INDIV_ID,VART_ALLELE_CNT\n");
+#endif
+        }
     }
 
     for (i = 0; i < numsnps; i++) {
@@ -2080,8 +2088,17 @@ printdata (char *genooutfilename, char *indoutfilename,
 	indx = indiv[j];
 	if (indx->ignore)
 	  continue;
+
+#if (TAB_SEPARATED_ANCESTRYMAP_GENO == YES)
+    // Modification: use tab separation to reduce resulting file size
+	fprintf (gfile, "%s\t%s\t%d\n", cupt->ID, indx->ID,
+		 getgtypes (cupt, j));
+#else
+    // This is the original fixed-field width separation. Prettier formatting, but has lots of whitespace resulting in bigger files.
 	fprintf (gfile, "%20s %20s %3d\n", cupt->ID, indx->ID,
 		 getgtypes (cupt, j));
+#endif
+
       }
     }
 
@@ -2097,7 +2114,23 @@ printdata (char *genooutfilename, char *indoutfilename,
   if (indoutfilename != NULL)
     openit (indoutfilename, &ifile, "w");
 
-  /* fprintf(ifile,"#INDIV,GENDER,POPULATION\n"); */
+
+#if (TAB_SEPARATED_ANCESTRYMAP_IND == YES)
+  // Modification: use tab separation to reduce resulting file size
+  if (tersemode) {
+    fprintf(ifile,"#INDIV\tGENDER\tPOPULATION\n");
+  } else {
+    fprintf(ifile,"#INDIV\tGENDER\tPOPULATION\tNUMVALIDS\n");
+  }
+#else
+  // This is the original fixed-field width separation. Prettier formatting, but has lots of whitespace resulting in bigger files.
+  if (tersemode) {
+    fprintf(ifile,"#INDIV,GENDER,POPULATION\n");
+  } else {
+    fprintf(ifile,"#INDIV,GENDER,POPULATION,NUMVALIDS\n");
+  }
+#endif
+
   for (i = 0; i < numind; i++) {
     indx = indiv[i];
     if (indx->ignore)
@@ -2107,12 +2140,27 @@ printdata (char *genooutfilename, char *indoutfilename,
       sprintf (ss, "%9.3f", indx->rawqval);
     }
     if (tersemode) {
-      fprintf (ifile, "%20s %c %10s", indx->ID, indx->gender, ss);
-      fprintf (ifile, "\n");
+#if (TAB_SEPARATED_ANCESTRYMAP_IND == YES)
+        // Modification: use tab separation to reduce resulting file size
+        fprintf (ifile, "%s\t%c\t%s", indx->ID, indx->gender, ss);
+        fprintf (ifile, "\n");
+#else
+        // This is the original fixed-field width separation. Prettier formatting, but has lots of whitespace resulting in bigger files.
+        fprintf (ifile, "%20s %c %10s", indx->ID, indx->gender, ss);
+        fprintf (ifile, "\n");
+#endif
       continue;
     }
     t = numvalids (indx, snpm, 0, numsnps - 1);
+
+#if (TAB_SEPARATED_ANCESTRYMAP_IND == YES)
+    // Modification: use tab separation to reduce resulting file size
+    fprintf (ifile, "%s\t%c\t%s\t%d\n", indx->ID, indx->gender, ss, t);
+#else
+    // This is the original fixed-field width separation. Prettier formatting, but has lots of whitespace resulting in bigger files.
     fprintf (ifile, "%20s %c %10s %5d\n", indx->ID, indx->gender, ss, t);
+#endif
+
   }
 
   if (indoutfilename != NULL)
@@ -3250,8 +3298,15 @@ outfiles (char *snpname, char *indname, char *gname, SNP ** snpm,
     if (snpname != NULL)
       printsnps (snpname, snpm, numsnps, indiv, NO, NO);
     packem = NO;
-    if (numsnps > (sizelimit / numind))
-      packem = YES;
+
+    // Add build option to force the ancestrymap to output in "unpacked" ancestrymap format regardless of size.
+    if (FORCE_UNPACKED_ANCESTRYMAP == NO)
+    {
+        // This is the original statement that decides to pack the output ancestrymap if it is greater than a certain size
+        if (numsnps > (sizelimit / numind))
+          packem = YES;
+    }
+
     printdata (gname, indname, snpm, indiv, numsnps, numind, packem);
     return;
   }

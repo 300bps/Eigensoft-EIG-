@@ -1,9 +1,32 @@
 ## -- Forked Branch Modifications  --
-This is a fork of the original EIGENSOFT package to implement the modifications listed below:
+This is a fork of the original EIGENSOFT package to implement the modifications listed below. The motivation for these modifications is to produce text-based output that can be easily parsed to allow ease-of-access to the data for custom programs.
+PROGRAM: convertf
+This program converts between the following formats: ANCESTRYMAP, PACKEDANCESTRYMAP, EIGENSTRAT, PED, PACKEDPED. The modifications introduced only affect the ANCESTRYMAP output format.
+    * Added build flag to prevent ANCESTRYMAP output from automatically switching to PACKEDANCESTRYMAP for large files.
+        - This will force the output to be the text ANCESTRYMAP format, but may result in HUGE file sizes.
+    * Added build flag to enable tab-separated ANCESTRYMAP geno file output instead of whitespace-separated data.
+        - This is to reduce ANCESTRYMAP output file size and to simplify parsing by custom programs.
+    * Added build flag to enable tab-separated ANCESTRYMAP snp file output instead of whitespace-separated data.
+        - This is to reduce output file size and to simplify parsing by custom programs.
+    * Added build flag to enable tab-separated ANCESTRYMAP ind file output instead of whitespace-separated data.
+        - This is to reduce output file size and to simplify parsing by custom programs.
+    
+
+Build Notes:
+    * See the build information in the pre-fork project's comments below for specifics.
+    * Summary: 
+        - Install gcc compiler
+        - Install the following development librarys:
+            - build-essential
+            - libopenblas-dev
+            - liblapacke-dev
+            - libgsl-dev
+        - To compile, switch to the 'src' directory and enter 'make'.
+            - If there are errors mentioning missing lapacke symbols (see details below), use this command instead: make LDLIBS="-llapacke"
+        - After a successful make, type 'make install'. The compiled programs will be placed in the '../bin' directory.
 
 
-
-## -- ORIGINAL (PRE-FORK) REPOSITORY/CREATOR COMMENTS BELOW -- ##
+## -- ORIGINAL (PRE-FORK) REPOSITORY/CREATOR COMMENTS ARE BELOW THIS LINE -- ##
 
 ## shrinkmode added.  3/15
 EIGENSOFT version 8.0.0, 03/30/21 (for Linux only)

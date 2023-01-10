@@ -81,6 +81,8 @@ int ancval (int x);
 static int setskipit (char *sx);	// ignore lines in snp, map files
 int calcishash (SNP ** snpm, Indiv ** indiv, int numsnps, int numind,
 		int *pihash, int *pshash);
+void printalleles_tabsep(SNP * cupt, FILE * fff);
+
 
 /* ---------------------------------------------------------------------------------------------------- */
 void 
@@ -1961,12 +1963,26 @@ printsnps (char *snpoutfilename, SNP ** snpm, int num, Indiv ** indm,
 	     "##Eur_vart: Parental European variant allele count, Eur:ref:Parental European reference allele count\n");
 
     fprintf (xfile, "\n");
+
+#if (TAB_SEPARATED_ANCESTRYMAP_SNP == YES)
+    // Modification: use tab separation to reduce resulting file size
+    fprintf (xfile, "%s\t%s\t%s\t%s", "#SNP_Id", "Chr_Num", "Gen_Pos",
+	     "Phys_Pos");
+    fprintf (xfile, "\t%s\t%s\t%s\t%s", "Afr_vart", "Afr_ref", "Eur_vart",
+	     "Eur_ref");
+    fprintf (xfile, "\n");
+
+#else
+    // This is the original fixed-field width separation. Prettier formatting, but has lots of whitespace resulting in bigger files.
     fprintf (xfile, "%20s %5s %10s %18s", "#SNP_Id", "Chr_Num", "Gen_Pos",
 	     "Phys_Pos");
     fprintf (xfile, " %9s %9s %9s %9s", "Afr_vart", "Afr_ref", "Eur_vart",
 	     "Eur_ref");
     fprintf (xfile, "\n");
+#endif
+
   }
+
   for (i = 0; i < num; ++i) {
     cupt = snpm[i];
     if (outputall == NO) {
@@ -1979,6 +1995,44 @@ printsnps (char *snpoutfilename, SNP ** snpm, int num, Indiv ** indm,
     ppos = cupt->physpos;
 
     mkchrom (ss, cupt->chrom, &ppos, cupt->chimpfudge, chrmode);
+
+#if (TAB_SEPARATED_ANCESTRYMAP_SNP == YES)
+    // Modification: use tab separation to reduce resulting file size
+//
+    fprintf (xfile, "%s\t%s\t", cupt->ID, ss);
+
+    if (cupt->genpos == 0.0) {
+      fprintf (xfile, "%0.0f\t%0.0f", cupt->genpos, ppos);
+    }
+    else {
+      fprintf (xfile, "%0.6f\t%0.0f", cupt->genpos, ppos);
+    }
+
+    if (tersemode) {
+      printalleles_tabsep (cupt, xfile);
+      fprintf (xfile, "\n");
+      continue;
+    }
+
+    fprintf (xfile, "\t%d\t", cupt->af_nn[0]);
+    fprintf (xfile, "%d\t", cupt->af_nn[1]);
+    fprintf (xfile, "%d\t", cupt->cauc_nn[0]);
+    fprintf (xfile, "%d", cupt->cauc_nn[1]);
+    if (!printvalids) {
+      printalleles_tabsep (cupt, xfile);
+      fprintf (xfile, "\n");
+      continue;
+    }
+    numvcase = numvalidgtx (indm, cupt, 1);
+    numvcontrol = numvalidgtx (indm, cupt, 0);
+    fprintf (xfile, "\t%d\t%d", numvcase, numvcontrol);
+    fprintf (xfile, "\t%d\t%d\t%d", cupt->ignore, cupt->isfake,
+	     cupt->isrfake);
+    printalleles_tabsep (cupt, xfile);
+    fprintf (xfile, "\n");
+
+#else
+    // This is the original fixed-field width separation. Prettier formatting, but has lots of whitespace resulting in bigger files.
     fprintf (xfile, "%20s %5s ", cupt->ID, ss);
 
     if (cupt->genpos == 0.0) {
@@ -2010,7 +2064,11 @@ printsnps (char *snpoutfilename, SNP ** snpm, int num, Indiv ** indm,
 	     cupt->isrfake);
     printalleles (cupt, xfile);
     fprintf (xfile, "\n");
+#endif
+
   }
+
+
   if (snpoutfilename != NULL)
     fclose (xfile);
 }
@@ -2026,6 +2084,16 @@ printalleles (SNP * cupt, FILE * fff)
   if ((c = cupt->alleles[1]) != CNULL)
     fprintf (fff, " %c", c);
 
+}
+
+void
+printalleles_tabsep (SNP * cupt, FILE * fff)
+{
+  char c;
+  if ((c = cupt->alleles[0]) != CNULL)
+    fprintf (fff, "\t%c", c);
+  if ((c = cupt->alleles[1]) != CNULL)
+    fprintf (fff, "\t%c", c);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -2065,6 +2133,7 @@ printdata (char *genooutfilename, char *indoutfilename,
         if (tersemode == NO)
         {
 #if (TAB_SEPARATED_ANCESTRYMAP_GENO == YES)
+            // Modification: use tab separation to reduce resulting file size
             fprintf (gfile, "#SNP_ID\tINDIV_ID\tVART_ALLELE_CNT\n");
 #else
             fprintf (gfile, "#SNP_ID,INDIV_ID,VART_ALLELE_CNT\n");
@@ -2117,16 +2186,14 @@ printdata (char *genooutfilename, char *indoutfilename,
 
 #if (TAB_SEPARATED_ANCESTRYMAP_IND == YES)
   // Modification: use tab separation to reduce resulting file size
-  if (tersemode) {
-    fprintf(ifile,"#INDIV\tGENDER\tPOPULATION\n");
-  } else {
+  if (!tersemode)
+  {
     fprintf(ifile,"#INDIV\tGENDER\tPOPULATION\tNUMVALIDS\n");
   }
 #else
   // This is the original fixed-field width separation. Prettier formatting, but has lots of whitespace resulting in bigger files.
-  if (tersemode) {
-    fprintf(ifile,"#INDIV,GENDER,POPULATION\n");
-  } else {
+  if (!tersemode)
+  {
     fprintf(ifile,"#INDIV,GENDER,POPULATION,NUMVALIDS\n");
   }
 #endif

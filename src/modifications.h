@@ -1,5 +1,5 @@
 // This file contains build options to enable/disable the custom
-// modifications to this branch of eigensoft.
+// modifications to this fork of the 'convertf' utility from the Eigensoft package.
 //
 // The original Eigensoft source code is property of the David Reich Lab at
 // Harvard University (https://reich.hms.harvard.edu) and is available at
@@ -8,11 +8,15 @@
 // The modifications in this fork are made by David Smith (https://github.com/300bps) at
 // https://github.com/300bps/Eigensoft-EIG-
 // All changes made to this software are released to the public domain via the MIT license.
+//
+// David Smith
 // 1/9/2023
 //
+// Modified Version: M1.0.0
 //
 // Changes:
-//  *
+//  * Added build flag to force ANCESTRYMAP (not PACKEDANCESTRYMAP) outputs to be unpacked regardless of resulting file size.
+//  * Added build flags to specify ANCESTRYMAP geno, ind, and snp files be tab ('\t') separated instead of whitespace-separated to greatly reduce unpacked output file size.
 
 
 

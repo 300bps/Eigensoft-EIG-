@@ -1,4 +1,6 @@
 ## -- Forked Branch Modifications  --
+Modification Version: M1.0.0
+
 This is a fork of the original EIGENSOFT package to implement the modifications listed below. The motivation for these modifications is to produce text-based output that can be easily parsed to allow ease-of-access to the data for custom programs.
 PROGRAM: convertf
 This program converts between the following formats: ANCESTRYMAP, PACKEDANCESTRYMAP, EIGENSTRAT, PED, PACKEDPED. The modifications introduced only affect the ANCESTRYMAP output format.
